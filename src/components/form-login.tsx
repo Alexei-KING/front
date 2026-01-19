@@ -54,25 +54,13 @@ const FormLogin = () => {
         <h1 className="text-3xl font-geist font-bold text-foreground">
           Papelería Sistema
         </h1>
-        <p className="text-muted-foreground font-manrope mt-2">
+        <p className="  text-black font-manrope mt-2 ">
           Sistema integral de gestión
         </p>
       </div>
-      <div className="max-150 border-x-gray-100 w-100 p-8 border rounded-lg shadow-lg my-10">
+      <div className="max-150  w-100  border rounded-lg shadow-lg my-10 bg-blue-50 py-7 px-5 shadow-xl/30 shadow-black">
         {" "}
-        {/* <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-          <Package className="h-8 w-8 text-primary-foreground" />
-        </div>
-        <h1 className="text-3xl font-geist font-bold text-foreground">
-          Papelería Sistema
-        </h1>
-        <p className="text-muted-foreground font-manrope mt-2">
-          Sistema integral de gestión
-        </p>
-      </div> */}
-        {/* // <div className="max-150 w-100 p-8 border rounded-lg shadow-lg my-50"> */}
-        <h1 className="mb-13 text-center text-2xl font-semibold ">
+        <h1 className="mb-13 text-center font-bold  fext-foreground text-2xl ">
           Inicio de Sesión
         </h1>
         <Form {...form}>

@@ -20,7 +20,7 @@ export interface HeaderProps {
 function Header({ activeModule, user }: HeaderProps) {
   console.log("Dashboard user:", user);
   return (
-    <header className="bg-card border-b border-border p-4">
+    <header className="border-b border-border p-4 bg-teal-600">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-geist font-semibold text-card-foreground">
@@ -32,16 +32,12 @@ function Header({ activeModule, user }: HeaderProps) {
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-sm font-manrope text-muted-foreground">
-              Tasa del día
-            </p>
-            <p className="font-geist font-semibold">
-              {/* 1 USD = {current?.usd_to_ves || "150"} Bs */}
-            </p>
+            <p className="text-sm font-manrope text-black">Tasa del día</p>
+            <p className="font-geist font-semibold">1 USD = "360" Bs</p>
           </div>
           <Badge
             variant="secondary"
-            className="font-manrope text-stone-50 pl-2 text-1xl bg-teal-700"
+            className="font-manrope text-stone-50 pl-2 text-1xl  bg-black"
           >
             {user?.username || user?.name || "Usuario"}
           </Badge>
