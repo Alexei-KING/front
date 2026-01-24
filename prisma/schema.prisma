@@ -1,0 +1,70 @@
+datasource db {
+  provider = "postgresql"
+<<<<<<< HEAD
+  url      = env("inventario_papeleria")
+=======
+  url      = env("DATABASE_URL")
+>>>>>>> 72c11592c80c804b1beee52043e637f7cd88b219
+}
+ 
+generator client {
+  provider = "prisma-client-js"
+}
+ enum Role {
+  SUPERVISOR
+  ADMIN
+  VENDEDOR
+}
+model User {
+  id            String          @id @default(cuid())
+  cedula        String          @unique
+  name          String?
+  lastname      String?
+  phone         String?
+  email         String          @unique
+  emailVerified DateTime?
+  address       String?
+  password      String?
+  username     String    @unique
+  accounts      Account[]
+  sessions      Session[]
+  role          Role    @default(ADMIN) // Define el campo role con valores del enum Role
+  // Optional for WebAuthn support
+
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+ 
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([provider, providerAccountId])
+}
+ 
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+ 
+
