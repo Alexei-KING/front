@@ -33,7 +33,8 @@ import {
   CheckCircle,
   AlertCircle,
   CreditCard,
-  Wallet
+  Wallet,
+  Coins
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
@@ -41,6 +42,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 // --- INTERFACES ---
 interface Product { id: number; nombre_producto: string; marca: string; categoria: string; stock_actual: number; precio_venta: number; sku?: string; }
 interface PaymentMethod { id: number; name: string; isActive?: boolean; }
+interface Currency { id: number; code: string; symbol: string; }
 interface ClientCreditProfile { creditLimit: string; currentDebt: string; isActive: boolean; }
 interface Client {
   id: number;
@@ -49,7 +51,7 @@ interface Client {
   phone: string;
   address?: string;
   rif?: string;
-  creditProfile?: ClientCreditProfile; // Agregado para ver la deuda
+  creditProfile?: ClientCreditProfile;
 }
 interface SaleItem { product_id: number; product_name: string; quantity: number; unit_price: number; total: number; }
 interface SaleHistory { id: number; total: number; createdAt: string; client?: { name: string; rif?: string; phone?: string; address?: string }; user?: { email: string }; paymentMethod?: { name: string }; items?: any[]; saleDetails?: any[]; }
@@ -143,6 +145,12 @@ export default function SalesBillingModule() {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [salesHistory, setSalesHistory] = useState<SaleHistory[]>([]);
 
+  // Estados de Moneda
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
+  const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("");
+  const [exchangeRate, setExchangeRate] = useState<number>(1);
+  const [loadingRate, setLoadingRate] = useState(false);
+
   // Estados UI
   const [activeTab, setActiveTab] = useState("new-sale");
   const [loading, setLoading] = useState(false);
@@ -157,8 +165,6 @@ export default function SalesBillingModule() {
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
   const [viewSaleModalOpen, setViewSaleModalOpen] = useState(false);
-
-  // --- NUEVO MODAL DE ABONO ---
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [clientToPay, setClientToPay] = useState<Client | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
@@ -168,27 +174,26 @@ export default function SalesBillingModule() {
     open: false, type: 'success', title: '', message: ''
   });
 
-  // Formulario Nuevo Cliente
   const [newClientData, setNewClientData] = useState({ fullname: "", taxId: "", email: "", phone: "", address: "" });
-
-  const currentRate = 36.5;
 
   const showMessage = (type: 'success' | 'error', title: string, message: string, action?: () => void) => {
     setFeedback({ open: true, type, title, message, action });
   };
 
-  // --- CARGA DE DATOS ---
+  // --- CARGA DE DATOS (CORREGIDA CON FALLBACK PARA MONEDAS) ---
   const fetchAllData = useCallback(async () => {
     if (status !== "authenticated" || !session?.user?.accessToken) return;
     setLoading(true);
     try {
       const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${session.user.accessToken}` };
 
-      const [resProducts, resMethods, resClients, resHistory] = await Promise.all([
+      // Nota: Fetch currencies puede fallar si no hay controller, atrapamos el error
+      const [resProducts, resMethods, resClients, resHistory, resCurrencies] = await Promise.all([
         fetch(`${API_URL}/products`, { headers }),
         fetch(`${API_URL}/sales/paymentMethod`, { headers }),
         fetch(`${API_URL}/clients`, { headers }),
-        fetch(`${API_URL}/sales`, { headers })
+        fetch(`${API_URL}/sales`, { headers }),
+        fetch(`${API_URL}/currencies`, { headers }).catch(() => ({ ok: false, json: async () => [] }))
       ]);
 
       if (resProducts.ok) {
@@ -222,6 +227,23 @@ export default function SalesBillingModule() {
         })));
       }
 
+      // --- PROCESAR MONEDAS CON FALLBACK ---
+      let currencyList: Currency[] = [];
+      if (resCurrencies.ok) {
+        const data = await resCurrencies.json();
+        currencyList = Array.isArray(data) ? data : (data.data || []);
+      }
+
+      // SI LA API NO DEVUELVE MONEDAS (porque falta el controller), USAMOS ESTAS POR DEFECTO:
+      if (currencyList.length === 0) {
+        currencyList = [
+          { id: 1, code: "USD", symbol: "$" },
+          { id: 2, code: "EUR", symbol: "€" },
+          { id: 3, code: "VES", symbol: "Bs." }
+        ];
+      }
+      setCurrencies(currencyList);
+
       if (resHistory.ok) {
         const data = await resHistory.json();
         const list = Array.isArray(data) ? data : (data.data || []);
@@ -231,19 +253,68 @@ export default function SalesBillingModule() {
           client: s.client ? { ...s.client, name: s.client.fullname || s.client.name } : undefined
         })));
       }
-    } catch (error) { console.error("Error cargando datos:", error); } finally { setLoading(false); }
+    } catch (error) {
+      console.error("Error cargando datos:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [session, status]);
+
+  // --- EFFECT: Autoseleccionar primera moneda ---
+  useEffect(() => {
+    if (currencies.length > 0 && !selectedCurrencyId) {
+      setSelectedCurrencyId(currencies[0].id.toString());
+    }
+  }, [currencies, selectedCurrencyId]);
+
+  // --- OBTENER TASA DE CAMBIO ---
+  const fetchExchangeRate = useCallback(async (currencyId: string) => {
+    if (!currencyId || status !== "authenticated" || !session?.user?.accessToken) return;
+    setLoadingRate(true);
+    try {
+      const res = await fetch(`${API_URL}/exchange-rates/history/${currencyId}?limit=1`, {
+        headers: { "Authorization": `Bearer ${session.user.accessToken}` }
+      });
+      const response = await res.json();
+      const historyData = response.data || [];
+
+      if (historyData.length > 0) {
+        setExchangeRate(Number(historyData[0].rateValue));
+      } else {
+        setExchangeRate(1);
+      }
+    } catch (error) {
+      console.error("Error obteniendo tasa:", error);
+      setExchangeRate(1);
+    } finally {
+      setLoadingRate(false);
+    }
   }, [session, status]);
 
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
-  // --- FUNCIONES ---
-  const formatCurrency = useCallback((amount: number, currency: string = "VES") => {
-    return `Bs. ${amount.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  useEffect(() => {
+    if (selectedCurrencyId) {
+      fetchExchangeRate(selectedCurrencyId);
+    }
+  }, [selectedCurrencyId, fetchExchangeRate]);
+
+  const formatCurrency = useCallback((amount: number, currencyCode: string = "VES") => {
+    return `${currencyCode === 'VES' ? 'Bs.' : '$'} ${amount.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }, []);
 
   const calculateTotals = useMemo(() => {
-    return { totalVES: selectedProducts.reduce((sum, item) => sum + item.total, 0) };
-  }, [selectedProducts]);
+    const totalVES = selectedProducts.reduce((sum, item) => sum + item.total, 0);
+    const convertedTotal = exchangeRate > 0 ? totalVES / exchangeRate : totalVES;
+    const selectedCurr = currencies.find(c => c.id.toString() === selectedCurrencyId);
+
+    return {
+      totalVES,
+      convertedTotal,
+      currencySymbol: selectedCurr?.symbol || "$",
+      currencyCode: selectedCurr?.code || "USD"
+    };
+  }, [selectedProducts, exchangeRate, selectedCurrencyId, currencies]);
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
@@ -275,7 +346,6 @@ export default function SalesBillingModule() {
     setSelectedProducts(prev => prev.filter(i => i.product_id !== productId));
   };
 
-  // --- PROCESAR VENTA ---
   const processSale = async () => {
     if (!selectedClient) return showMessage('error', 'Falta Cliente', 'Por favor seleccione un cliente.');
     if (!selectedPaymentMethodId) return showMessage('error', 'Falta Pago', 'Por favor seleccione un método de pago.');
@@ -286,7 +356,7 @@ export default function SalesBillingModule() {
       const payload = {
         clientId: selectedClient.id,
         paymentMethodId: Number(selectedPaymentMethodId),
-        currencyId: 1,
+        currencyId: selectedCurrencyId ? Number(selectedCurrencyId) : 1,
         items: selectedProducts.map(i => ({ productId: i.product_id, quantity: i.quantity }))
       };
 
@@ -302,16 +372,13 @@ export default function SalesBillingModule() {
       }
 
       await fetchAllData();
-
       setSelectedProducts([]);
       setSelectedClient(null);
       setSelectedPaymentMethodId("");
       setSearchTerm("");
-
       showMessage('success', '¡Venta Exitosa!', 'La transacción se ha registrado correctamente.', () => {
         setActiveTab("sales-history");
       });
-
     } catch (e: any) {
       showMessage('error', 'Error al Procesar', e.message || 'Ocurrió un error inesperado.');
     } finally {
@@ -319,25 +386,19 @@ export default function SalesBillingModule() {
     }
   };
 
-  // --- PROCESAR ABONO ---
   const handleOpenPaymentDialog = (client: Client) => {
     setClientToPay(client);
     setPaymentAmount("");
     setIsPaymentDialogOpen(true);
-    // No cerramos el dialogo de clientes todavía para que sea fluido
   };
 
   const handleProcessPayment = async () => {
     if (!clientToPay || !paymentAmount) return;
     const amount = parseFloat(paymentAmount);
-
-    if (isNaN(amount) || amount <= 0) {
-      return showMessage('error', 'Monto Inválido', 'El monto debe ser mayor a 0');
-    }
+    if (isNaN(amount) || amount <= 0) return showMessage('error', 'Monto Inválido', 'El monto debe ser mayor a 0');
 
     setLoading(true);
     try {
-      // Endpoint PATCH definido en tu ClientsController
       const res = await fetch(`${API_URL}/clients/${clientToPay.id}/payment`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.user?.accessToken}` },
@@ -349,11 +410,10 @@ export default function SalesBillingModule() {
         throw new Error(errorData.message || "Error al procesar el abono");
       }
 
-      await fetchAllData(); // Recargar datos para ver deuda actualizada
+      await fetchAllData();
       setIsPaymentDialogOpen(false);
-      setIsClientDialogOpen(false); // Cerramos también el selector de clientes
+      setIsClientDialogOpen(false);
       showMessage('success', 'Abono Exitoso', `Se abonaron ${formatCurrency(amount)} a la cuenta de ${clientToPay.name}`);
-
     } catch (e: any) {
       showMessage('error', 'Error en Abono', e.message);
     } finally {
@@ -536,19 +596,15 @@ export default function SalesBillingModule() {
                                 </div>
 
                                 <div className="flex items-center gap-4">
-                                  {/* MOSTRAR DEUDA SI TIENE */}
                                   {c.creditProfile && Number(c.creditProfile.currentDebt) > 0 && (
                                     <div className="text-right">
                                       <div className="text-xs text-gray-500">Deuda:</div>
                                       <div className="text-sm font-bold text-red-600">{formatCurrency(Number(c.creditProfile.currentDebt), "VES")}</div>
                                     </div>
                                   )}
-
                                   <Button size="sm" variant="outline" onClick={() => { setSelectedClient(c); setIsClientDialogOpen(false); }}>
                                     Seleccionar
                                   </Button>
-
-                                  {/* BOTÓN DE ABONAR (SOLO SI TIENE DEUDA) */}
                                   {c.creditProfile && Number(c.creditProfile.currentDebt) > 0 && (
                                     <Button
                                       size="sm"
@@ -593,26 +649,69 @@ export default function SalesBillingModule() {
                     ))}
                   </div>
 
-                  <div className="mb-4 space-y-2">
-                    <Label>Método de Pago</Label>
-                    <Select value={selectedPaymentMethodId} onValueChange={setSelectedPaymentMethodId}>
-                      <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                      <SelectContent>
-                        {paymentMethods.length === 0 ? (
-                          <SelectItem value="0" disabled>Cargando métodos...</SelectItem>
-                        ) : (
-                          paymentMethods.map(pm => (<SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>))
+                  {/* --- SECCIÓN DE PAGO Y MONEDA (AJUSTADA AL MISMO TAMAÑO) --- */}
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <Label>Método de Pago</Label>
+                      <Select value={selectedPaymentMethodId} onValueChange={setSelectedPaymentMethodId}>
+                        <SelectTrigger className="w-full"><SelectValue placeholder="Pago..." /></SelectTrigger>
+                        <SelectContent>
+                          {paymentMethods.length === 0 ? (
+                            <SelectItem value="0" disabled>Cargando...</SelectItem>
+                          ) : (
+                            paymentMethods.map(pm => (<SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Moneda</Label>
+                      <Select
+                        value={selectedCurrencyId}
+                        onValueChange={setSelectedCurrencyId}
+                        disabled={currencies.length === 0} // SOLO BLOQUEADO SI NO HAY DATOS
+                      >
+                        <SelectTrigger className="w-full">
+                          <div className="flex items-center gap-2">
+                            {/* Loader animado pero sin bloquear */}
+                            {loadingRate ? <Loader2 className="h-3 w-3 animate-spin text-emerald-600" /> : <Coins className="h-4 w-4 text-amber-500" />}
+                            <SelectValue placeholder="Moneda" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {currencies.map(c => (
+                            <SelectItem key={c.id} value={c.id.toString()}>{c.code} - {c.symbol}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-2 bg-slate-50 p-3 rounded-lg">
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Subtotal (Bs.):</span>
+                      <span>{formatCurrency(calculateTotals.totalVES, "VES")}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-1 border-t border-dashed border-gray-300">
+                      <span className="text-lg font-bold">Total a Pagar:</span>
+                      <div className="text-right">
+                        <div className="text-2xl font-black text-primary">
+                          {calculateTotals.currencySymbol} {calculateTotals.convertedTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        {exchangeRate > 1 && (
+                          <div className="text-[10px] text-gray-500 font-medium">
+                            Tasa: 1 {calculateTotals.currencySymbol} = {exchangeRate} Bs.
+                          </div>
                         )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="border-t pt-4 space-y-2">
-                    <div className="flex justify-between text-lg font-bold"><span>Total:</span><span>{formatCurrency(calculateTotals.totalVES, "VES")}</span></div>
-                    <p className="text-xs text-right text-gray-500">Ref USD: {formatCurrency(calculateTotals.totalVES / currentRate, "USD")}</p>
-                  </div>
-
-                  <Button className="w-full mt-4" size="lg" onClick={processSale} disabled={loading}><ShoppingCart className="mr-2 h-5 w-5" /> Procesar Venta</Button>
+                  <Button className="w-full mt-4" size="lg" onClick={processSale} disabled={loading || loadingRate}>
+                    {loading ? <Loader2 className="animate-spin mr-2" /> : <ShoppingCart className="mr-2 h-5 w-5" />}
+                    Procesar Venta
+                  </Button>
                 </CardContent>
               </Card>
             </div>

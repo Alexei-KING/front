@@ -13,18 +13,18 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 // Iconos
-import {
-    CheckCircle,
-    Loader2,
-    Phone,
-    AlertCircle,
-    TrendingDown,
-    Receipt,
-    History,
-    Wallet,
-    Search,
-    RefreshCw,
-    User
+import { 
+  CheckCircle, 
+  Loader2, 
+  Phone, 
+  AlertCircle, 
+  TrendingDown, 
+  Receipt, 
+  History, 
+  Wallet, 
+  Search, 
+  RefreshCw,
+  User
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
@@ -66,7 +66,7 @@ export default function AccountsReceivable() {
                     const profile = client.creditProfile;
                     // Verificamos que tenga perfil y que la deuda sea positiva
                     if (!profile || !profile.isActive) return false;
-                    return Number(profile.currentDebt) > 0.01;
+                    return Number(profile.currentDebt) > 0.01; 
                 });
 
                 setDebtors(activeDebtors);
@@ -86,8 +86,8 @@ export default function AccountsReceivable() {
     const filteredDebtors = useMemo(() => {
         if (!searchTerm) return debtors;
         const lowerTerm = searchTerm.toLowerCase();
-        return debtors.filter(d =>
-            d.fullname?.toLowerCase().includes(lowerTerm) ||
+        return debtors.filter(d => 
+            d.fullname?.toLowerCase().includes(lowerTerm) || 
             d.taxId?.toLowerCase().includes(lowerTerm)
         );
     }, [debtors, searchTerm]);
@@ -131,8 +131,8 @@ export default function AccountsReceivable() {
 
             // ÉXITO: Recargamos la lista. 
             // Si el cliente pagó todo, su deuda será 0 y desaparecerá de la lista automáticamente.
-            await fetchDebtors();
-
+            await fetchDebtors(); 
+            
             setIsPaymentModalOpen(false);
             setPaymentAmount("");
             setSelectedClient(null);
@@ -168,7 +168,7 @@ export default function AccountsReceivable() {
                         Gestión de abonos y saldos pendientes
                     </p>
                 </div>
-
+                
                 <div className="flex flex-col items-end gap-3">
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" onClick={fetchDebtors} title="Actualizar lista">
@@ -179,13 +179,13 @@ export default function AccountsReceivable() {
                         </Badge>
                     </div>
                     <div className="relative w-72">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                            placeholder="Buscar por nombre o RIF..."
-                            className="pl-9 bg-white shadow-sm"
+                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                         <Input 
+                            placeholder="Buscar por nombre o RIF..." 
+                            className="pl-9 bg-white shadow-sm" 
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                         />
                     </div>
                 </div>
             </div>
@@ -245,7 +245,7 @@ export default function AccountsReceivable() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2 text-slate-600 text-sm">
-                                                <Phone className="h-3 w-3 text-emerald-600" />
+                                                <Phone className="h-3 w-3 text-emerald-600" /> 
                                                 {client.phone || 'N/A'}
                                             </div>
                                             <div className="text-xs text-slate-400 mt-1 truncate max-w-[150px]">
@@ -282,7 +282,7 @@ export default function AccountsReceivable() {
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-xl">
-                            <Receipt className="h-5 w-5 text-emerald-600" />
+                            <Receipt className="h-5 w-5 text-emerald-600" /> 
                             Registrar Abono
                         </DialogTitle>
                         <DialogDescription>
@@ -320,7 +320,7 @@ export default function AccountsReceivable() {
                                     autoFocus
                                 />
                             </div>
-
+                            
                             {/* Cálculo previo visual */}
                             {paymentAmount && Number(paymentAmount) > 0 && (
                                 <div className="text-xs text-center p-2 bg-emerald-50 text-emerald-700 rounded border border-emerald-100 mt-2">
@@ -332,8 +332,8 @@ export default function AccountsReceivable() {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsPaymentModalOpen(false)}>Cancelar</Button>
-                        <Button
-                            onClick={processPayment}
+                        <Button 
+                            onClick={processPayment} 
                             disabled={isProcessing || !paymentAmount || Number(paymentAmount) <= 0}
                             className="bg-emerald-600 hover:bg-emerald-700"
                         >
