@@ -140,6 +140,14 @@ export default function ReportsDashboard() {
             <span className="text-[10px] font-bold uppercase tracking-widest">Live Sync: {lastUpdate.toLocaleTimeString()}</span>
           </div>
         </div>
+<<<<<<< HEAD
+=======
+        <div className="flex gap-3">
+          <Button onClick={loadAllAnalytics} variant="outline" className="border-2 border-black font-bold rounded-xl hover:bg-black hover:text-white transition-all">
+            <RefreshCcw className="mr-2 h-4 w-4" /> REFRESCAR
+          </Button>
+        </div>
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
       </div>
 
       {/* CONTENIDO PARA PANTALLA E IMPRESIÓN */}

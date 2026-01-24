@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { LoginSchema } from "@/lib/zod";
@@ -47,15 +48,35 @@ export default {
     },
   },
   
+=======
+// auth.config.ts
+import { LoginSchema } from "@/lib/zod";
+import type { NextAuthConfig } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+
+export default {
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   providers: [
     Credentials({
       authorize: async (credentials) => {
         console.log("--- INTENTO DE LOGIN ---");
         
+<<<<<<< HEAD
         const { data, success } = LoginSchema.safeParse(credentials);
         if (!success) return null;
 
         try {
+=======
+        // 1. Validamos los datos con Zod
+        const { data, success } = LoginSchema.safeParse(credentials);
+        if (!success) {
+          console.log("❌ Error en Zod: Los datos no tienen el formato correcto");
+          return null;
+        }
+
+        try {
+          console.log("📡 Llamando a NestJS en el puerto 4000...");
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
           const res = await fetch("http://localhost:4000/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -68,6 +89,7 @@ export default {
           const user = await res.json();
 
           if (res.ok && user) {
+<<<<<<< HEAD
             return {
               ...user,
               id: user.id?.toString() || user.cedula?.toString() || "user_id",
@@ -78,6 +100,16 @@ export default {
             return null;
           }
         } catch (error) {
+=======
+            console.log("✅ NestJS aceptó las credenciales!");
+            return user; // Aquí devolvemos el objeto que tiene el TOKEN
+          } else {
+            console.log("❌ NestJS rechazó el login:", user.message || "Error desconocido");
+            return null;
+          }
+        } catch (error) {
+          console.log("🔥 ERROR CRÍTICO de conexión con el Backend:", error);
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
           return null;
         }
       },

@@ -53,20 +53,28 @@ import {
 import type { Product } from "../../app/(protected)/types/produc";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
+<<<<<<< HEAD
 
 // Interfaz local para Categoría
 interface Category {
   id: number;
   name: string;
 }
+=======
+const CATEGORIAS = ["Papel", "Escritura", "Archivo", "Oficina", "Escolar"];
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 
 export default function TablaInventarioEjemplo() {
   const { data: session, status } = useSession();
 
   const [productos, setProductos] = useState<Product[]>([]);
+<<<<<<< HEAD
   const [categoriesList, setCategoriesList] = useState<Category[]>([]); // Estado para categorías
   const [loading, setLoading] = useState(true);
 
+=======
+  const [loading, setLoading] = useState(true);
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const [terminoBusqueda, setTerminoBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("all");
   const [mostrarStockBajo, setMostrarStockBajo] = useState(false);
@@ -74,12 +82,18 @@ export default function TablaInventarioEjemplo() {
   // Modales
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+<<<<<<< HEAD
+=======
+
+  // Estado para el Modal de Borrado
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const [productoABorrar, setProductoABorrar] = useState<Product | null>(null);
   const [borrando, setBorrando] = useState(false);
 
   const [paginaActual, setPaginaActual] = useState(1);
   const [productosPorPagina, setProductosPorPagina] = useState(10);
 
+<<<<<<< HEAD
   // --- 1. CARGAR DATOS (Productos y Categorías) ---
   const fetchData = useCallback(async () => {
     if (status !== "authenticated" || !session?.user?.accessToken) return;
@@ -99,10 +113,29 @@ export default function TablaInventarioEjemplo() {
 
       // Manejo de sesión
       if (productsRes.status === 401 || categoriesRes.status === 401) {
+=======
+  // --- 1. CARGAR DATOS ---
+  const fetchProductos = useCallback(async () => {
+    if (status !== "authenticated" || !session?.user?.accessToken) return;
+
+    try {
+      const response = await fetch(`${API_URL}/products`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.user.accessToken}`,
+        },
+      });
+
+      // Manejo automático de sesión vencida
+      if (response.status === 401) {
+        console.log("Sesión vencida, redirigiendo...");
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
         await signIn();
         return;
       }
 
+<<<<<<< HEAD
       // Procesar Categorías
       if (categoriesRes.ok) {
         const catData = await categoriesRes.json();
@@ -130,21 +163,63 @@ export default function TablaInventarioEjemplo() {
 
     } catch (error) {
       console.error("Error cargando datos:", error);
+=======
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      const listaBackend = Array.isArray(data) ? data : (data.data || []);
+
+      const productosMapeados = listaBackend.map((item: any) => ({
+        id: item.id,
+        nombre_producto: item.nombre_producto || item.name || "Sin Nombre",
+        descripcion: item.descripcion || item.description || "",
+        marca: item.marca || item.brand || "Genérico",
+        categoria: typeof item.category === 'object' ? item.category?.name : (item.categoria || item.category || "General"),
+        subcategoria: item.subcategoria || item.subcategory || "",
+        stock_actual: Number(item.stock_actual ?? item.stock ?? 0),
+        stock_minimo: Number(item.stock_minimo ?? item.minStock ?? 0),
+        precio_compra: Number(item.precio_compra ?? item.purchasePrice ?? 0),
+        precio_venta: Number(item.precio_venta ?? item.price ?? 0),
+        unidades_por_bulto: Number(item.unidades_por_bulto ?? 0),
+        fecha_actualizacion: item.fecha_actualizacion || "",
+      }));
+
+      setProductos(productosMapeados);
+    } catch (error) {
+      console.error("Error cargando inventario:", error);
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
     } finally {
       setLoading(false);
     }
   }, [session, status]);
 
   // --- 2. BORRAR PRODUCTO ---
+<<<<<<< HEAD
   const confirmarBorrado = async () => {
     if (!productoABorrar || !session?.user?.accessToken) return;
     setBorrando(true);
     try {
+=======
+  const solicitarBorrado = (producto: Product) => {
+    setProductoABorrar(producto);
+  };
+
+  const confirmarBorrado = async () => {
+    if (!productoABorrar || !session?.user?.accessToken) return;
+
+    setBorrando(true);
+    try {
+      // USAMOS LA RUTA CORRECTA DIRECTAMENTE: /products (Plural)
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
       const response = await fetch(`${API_URL}/products/${productoABorrar.id}`, {
         method: "DELETE",
         headers: { "Authorization": `Bearer ${session.user.accessToken}` },
       });
 
+<<<<<<< HEAD
       if (!response.ok) throw new Error("Error al eliminar");
 
       setProductos((prev) => prev.filter((p) => p.id !== productoABorrar.id));
@@ -152,12 +227,27 @@ export default function TablaInventarioEjemplo() {
     } catch (error) {
       console.error(error);
       alert("No se pudo eliminar el producto");
+=======
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Error desconocido" }));
+        throw new Error(errorData.message || `Error ${response.status}`);
+      }
+
+      // Éxito: Quitamos de la lista local
+      setProductos((prev) => prev.filter((p) => p.id !== productoABorrar.id));
+      setProductoABorrar(null);
+
+    } catch (error: any) {
+      console.error(error);
+      alert(`No se pudo eliminar: ${error.message}`);
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
     } finally {
       setBorrando(false);
     }
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     if (status === "authenticated") fetchData();
     else if (status === "unauthenticated") setLoading(false);
   }, [status, fetchData]);
@@ -169,6 +259,21 @@ export default function TablaInventarioEjemplo() {
     // Comparamos el nombre de la categoría del producto con el seleccionado
     const coincideCategoria = categoriaSeleccionada === "all" || producto.categoria === categoriaSeleccionada;
     const coincideStock = !mostrarStockBajo || producto.stock_actual <= producto.stock_minimo;
+=======
+    if (status === "authenticated") fetchProductos();
+    else if (status === "unauthenticated") setLoading(false);
+  }, [status, fetchProductos]);
+
+  // --- FILTROS Y RENDER ---
+  const productosFiltrados = productos.filter((producto) => {
+    const busqueda = terminoBusqueda.toLowerCase();
+    const coincideTexto =
+      producto.nombre_producto?.toLowerCase().includes(busqueda) ||
+      producto.marca?.toLowerCase().includes(busqueda);
+    const coincideCategoria = categoriaSeleccionada === "all" || producto.categoria === categoriaSeleccionada;
+    const coincideStock = !mostrarStockBajo || producto.stock_actual <= producto.stock_minimo;
+
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
     return coincideTexto && coincideCategoria && coincideStock;
   });
 
@@ -176,11 +281,27 @@ export default function TablaInventarioEjemplo() {
   const indiceInicio = (paginaActual - 1) * productosPorPagina;
   const productosPaginados = productosFiltrados.slice(indiceInicio, indiceInicio + productosPorPagina);
 
+<<<<<<< HEAD
+=======
+  useEffect(() => { setPaginaActual(1); }, [terminoBusqueda, categoriaSeleccionada, mostrarStockBajo]);
+  const cambiarPagina = (pag: number) => { if (pag >= 1 && pag <= totalPaginas) setPaginaActual(pag); };
+
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
     setIsFormOpen(true);
   };
 
+<<<<<<< HEAD
+=======
+  const handleCloseForm = () => {
+    setIsFormOpen(false);
+    setEditingProduct(null);
+  };
+
+  if (status === "loading") return <div className="flex h-96 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   return (
     <div className="space-y-6 fade-in duration-500">
       <EstadisticasInventario productos={productos} />
@@ -203,12 +324,17 @@ export default function TablaInventarioEjemplo() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
+<<<<<<< HEAD
                 placeholder="Buscar por nombre..."
+=======
+                placeholder="Buscar por nombre, marca..."
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                 value={terminoBusqueda}
                 onChange={(e) => setTerminoBusqueda(e.target.value)}
                 className="pl-10 bg-white"
               />
             </div>
+<<<<<<< HEAD
 
             {/* SELECT DINÁMICO DE CATEGORÍAS */}
             <Select value={categoriaSeleccionada} onValueChange={setCategoriaSeleccionada}>
@@ -225,6 +351,15 @@ export default function TablaInventarioEjemplo() {
               </SelectContent>
             </Select>
 
+=======
+            <Select value={categoriaSeleccionada} onValueChange={setCategoriaSeleccionada}>
+              <SelectTrigger className="w-full sm:w-48 bg-white"><SelectValue placeholder="Categoría" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {CATEGORIAS.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              </SelectContent>
+            </Select>
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
             <Button
               variant={mostrarStockBajo ? "destructive" : "outline"}
               onClick={() => setMostrarStockBajo(!mostrarStockBajo)}
@@ -248,7 +383,11 @@ export default function TablaInventarioEjemplo() {
               </TableHeader>
               <TableBody>
                 {loading && productos.length === 0 ? (
+<<<<<<< HEAD
                   <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground"><Loader2 className="inline h-6 w-6 animate-spin" /> Cargando...</TableCell></TableRow>
+=======
+                  <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">Sincronizando...</TableCell></TableRow>
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                 ) : productosPaginados.length === 0 ? (
                   <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
@@ -290,7 +429,11 @@ export default function TablaInventarioEjemplo() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-gray-400 hover:text-red-600 hover:bg-red-50"
+<<<<<<< HEAD
                             onClick={() => setProductoABorrar(producto)}
+=======
+                            onClick={() => solicitarBorrado(producto)}
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -308,10 +451,17 @@ export default function TablaInventarioEjemplo() {
               Página {paginaActual} de {totalPaginas || 1}
             </div>
             <div className="flex gap-2">
+<<<<<<< HEAD
               <Button variant="outline" size="sm" onClick={() => setPaginaActual(p => Math.max(1, p - 1))} disabled={paginaActual === 1}>
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" onClick={() => setPaginaActual(p => Math.min(totalPaginas, p + 1))} disabled={paginaActual === totalPaginas}>
+=======
+              <Button variant="outline" size="sm" onClick={() => cambiarPagina(paginaActual - 1)} disabled={paginaActual === 1}>
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => cambiarPagina(paginaActual + 1)} disabled={paginaActual === totalPaginas}>
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -319,6 +469,7 @@ export default function TablaInventarioEjemplo() {
         </CardContent>
       </Card>
 
+<<<<<<< HEAD
       {/* MODAL BORRADO */}
       <Dialog open={!!productoABorrar} onOpenChange={(open) => !open && setProductoABorrar(null)}>
         <DialogContent>
@@ -334,6 +485,34 @@ export default function TablaInventarioEjemplo() {
             <Button variant="outline" onClick={() => setProductoABorrar(null)}>Cancelar</Button>
             <Button variant="destructive" onClick={confirmarBorrado} disabled={borrando}>
               {borrando ? <Loader2 className="animate-spin h-4 w-4" /> : "Eliminar"}
+=======
+      {/* MODAL DE CONFIRMACIÓN */}
+      <Dialog open={!!productoABorrar} onOpenChange={(open) => !open && setProductoABorrar(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              Eliminar Producto
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              ¿Estás seguro que deseas eliminar <strong>{productoABorrar?.nombre_producto}</strong>?
+              <br /><br />
+              Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setProductoABorrar(null)} disabled={borrando}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={confirmarBorrado} disabled={borrando}>
+              {borrando ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Eliminando...
+                </>
+              ) : (
+                "Sí, Eliminar"
+              )}
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -341,9 +520,15 @@ export default function TablaInventarioEjemplo() {
 
       <ProductForm
         isOpen={isFormOpen}
+<<<<<<< HEAD
         onCloseAction={() => { setIsFormOpen(false); setEditingProduct(null); }}
         editingProduct={editingProduct}
         onSuccessAction={fetchData}
+=======
+        onCloseAction={handleCloseForm}
+        editingProduct={editingProduct}
+        onSuccessAction={fetchProductos}
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
       />
     </div>
   );

@@ -6,8 +6,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
 // Borramos useRouter porque usaremos window.location para forzar la entrada
 // import { useRouter } from "next/navigation"; 
+=======
+import { useRouter } from "next/navigation";
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 import {
   Form,
   FormControl,
@@ -18,13 +22,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { loginAction } from "../../actions/auth-action";
+<<<<<<< HEAD
 import { Loader2, Package } from "lucide-react";
+=======
+import { Loader2, Package, User, Lock } from "lucide-react";
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 import { useAuth } from "@/components/auth-context";
 
 const FormLogin = () => {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+<<<<<<< HEAD
   // const router = useRouter(); // <--- YA NO LO NECESITAMOS
+=======
+  const router = useRouter();
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const { isLoading } = useAuth();
 
   const form = useForm<z.infer<typeof LoginSchema>>({
@@ -34,11 +46,15 @@ const FormLogin = () => {
       password: "",
     },
   });
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   async function onSubmit(values: z.infer<typeof LoginSchema>) {
     setError(null);
     startTransition(async () => {
       const response = await loginAction(values);
+<<<<<<< HEAD
 
       if (response?.error) {
         setError(response.error);
@@ -47,6 +63,12 @@ const FormLogin = () => {
         // En lugar de usar el router de Next.js que tiene caché,
         // forzamos al navegador a ir a la url. Esto obliga a leer la cookie sí o sí.
         window.location.href = "/dashboard";
+=======
+      if (response?.error) {
+        setError(response.error);
+      } else {
+        router.push("/dashboard");
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
       }
     });
   }
@@ -104,6 +126,10 @@ const FormLogin = () => {
               )}
             />
             {error && <FormMessage>{error}</FormMessage>}
+<<<<<<< HEAD
+=======
+            {/* {error && <p className="text-sm text-red-600 text-center">{error}</p>} */}
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
             <Button
               type="submit"
               className="w-full bg-teal-600 hover:bg-teal-900"
@@ -124,4 +150,8 @@ const FormLogin = () => {
     </div>
   );
 };
+<<<<<<< HEAD
 export default FormLogin;
+=======
+export default FormLogin;
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72

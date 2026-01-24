@@ -1,8 +1,13 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+<<<<<<< HEAD
 import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+=======
+import { useSession, signIn } from "next-auth/react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +29,11 @@ import {
   ShoppingCart,
   Search,
   Trash2,
+<<<<<<< HEAD
+=======
+  FileText,
+  User,
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   Loader2,
   RefreshCw,
   Plus,
@@ -31,14 +41,19 @@ import {
   Eye,
   Printer,
   CheckCircle,
+<<<<<<< HEAD
   AlertCircle,
   CreditCard,
   Wallet,
   Coins
+=======
+  AlertCircle
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api";
 
+<<<<<<< HEAD
 // --- INTERFACES ---
 interface Product { id: number; nombre_producto: string; marca: string; categoria: string; stock_actual: number; precio_venta: number; sku?: string; }
 interface PaymentMethod { id: number; name: string; isActive?: boolean; }
@@ -57,6 +72,28 @@ interface SaleItem { product_id: number; product_name: string; quantity: number;
 interface SaleHistory { id: number; total: number; createdAt: string; client?: { name: string; rif?: string; phone?: string; address?: string }; user?: { email: string }; paymentMethod?: { name: string }; items?: any[]; saleDetails?: any[]; }
 
 // --- COMPONENTE DE FACTURA ---
+=======
+// --- LISTA FIJA DE MÉTODOS DE PAGO (HARDCODED) ---
+// Nota: Asegúrate de que estos IDs (1, 2, 3...) existan en tu base de datos eventualmente
+// para que no de error de llave foránea al guardar la venta.
+const STATIC_PAYMENT_METHODS = [
+  { id: 1, name: "Efectivo" },
+  { id: 2, name: "Pago Móvil" },
+  { id: 3, name: "Punto de Venta" },
+  { id: 4, name: "Transferencia" },
+  { id: 5, name: "Divisas" },
+  { id: 6, name: "Crédito" }
+];
+
+// --- INTERFACES ---
+interface Product { id: number; nombre_producto: string; marca: string; categoria: string; stock_actual: number; precio_venta: number; sku?: string; }
+interface PaymentMethod { id: number; name: string; }
+interface Client { id: number; name: string; email: string; phone: string; address?: string; rif?: string; }
+interface SaleItem { product_id: number; product_name: string; quantity: number; unit_price: number; total: number; }
+interface SaleHistory { id: number; total: number; createdAt: string; client?: { name: string; rif?: string; phone?: string; address?: string }; user?: { email: string }; paymentMethod?: { name: string }; items?: any[]; saleDetails?: any[]; }
+
+// --- COMPONENTE DE FACTURA (MODAL BONITO) ---
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 interface InvoiceProps { sale: SaleHistory | any; clientName: string; formatCurrency: (amount: number, currency: string) => string; }
 
 const InvoiceComponent: React.FC<InvoiceProps> = ({ sale, clientName, formatCurrency }) => {
@@ -142,6 +179,7 @@ export default function SalesBillingModule() {
   // Estados de Datos
   const [products, setProducts] = useState<Product[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+<<<<<<< HEAD
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [salesHistory, setSalesHistory] = useState<SaleHistory[]>([]);
 
@@ -150,6 +188,13 @@ export default function SalesBillingModule() {
   const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<number>(1);
   const [loadingRate, setLoadingRate] = useState(false);
+=======
+
+  // AQUI: Usamos la lista estática directamente
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(STATIC_PAYMENT_METHODS);
+
+  const [salesHistory, setSalesHistory] = useState<SaleHistory[]>([]);
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 
   // Estados UI
   const [activeTab, setActiveTab] = useState("new-sale");
@@ -165,28 +210,44 @@ export default function SalesBillingModule() {
   const [isClientDialogOpen, setIsClientDialogOpen] = useState(false);
   const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
   const [viewSaleModalOpen, setViewSaleModalOpen] = useState(false);
+<<<<<<< HEAD
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [clientToPay, setClientToPay] = useState<Client | null>(null);
   const [paymentAmount, setPaymentAmount] = useState("");
 
+=======
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const [selectedSaleDetail, setSelectedSaleDetail] = useState<SaleHistory | null>(null);
   const [feedback, setFeedback] = useState<{ open: boolean; type: 'success' | 'error'; title: string; message: string; action?: () => void }>({
     open: false, type: 'success', title: '', message: ''
   });
 
+<<<<<<< HEAD
   const [newClientData, setNewClientData] = useState({ fullname: "", taxId: "", email: "", phone: "", address: "" });
 
+=======
+  // Formulario Nuevo Cliente
+  const [newClientData, setNewClientData] = useState({ fullname: "", taxId: "", email: "", phone: "", address: "" });
+
+  const currentRate = 36.5;
+
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const showMessage = (type: 'success' | 'error', title: string, message: string, action?: () => void) => {
     setFeedback({ open: true, type, title, message, action });
   };
 
+<<<<<<< HEAD
   // --- CARGA DE DATOS (CORREGIDA CON FALLBACK PARA MONEDAS) ---
+=======
+  // --- CARGA DE DATOS ---
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const fetchAllData = useCallback(async () => {
     if (status !== "authenticated" || !session?.user?.accessToken) return;
     setLoading(true);
     try {
       const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${session.user.accessToken}` };
 
+<<<<<<< HEAD
       // Nota: Fetch currencies puede fallar si no hay controller, atrapamos el error
       const [resProducts, resMethods, resClients, resHistory, resCurrencies] = await Promise.all([
         fetch(`${API_URL}/products`, { headers }),
@@ -200,6 +261,14 @@ export default function SalesBillingModule() {
         const data = await resProducts.json();
         const list = Array.isArray(data) ? data : (data.data || []);
         setProducts(list.map((p: any) => ({
+=======
+      // 1. PRODUCTOS
+      const resProducts = await fetch(`${API_URL}/products`, { headers });
+      if (resProducts.ok) {
+        const dataProducts = await resProducts.json();
+        const listProducts = Array.isArray(dataProducts) ? dataProducts : (dataProducts.data || []);
+        setProducts(listProducts.map((p: any) => ({
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
           id: p.id,
           nombre_producto: p.nombre_producto || p.name,
           marca: p.marca || p.brand || "Genérico",
@@ -210,6 +279,7 @@ export default function SalesBillingModule() {
         })));
       }
 
+<<<<<<< HEAD
       if (resMethods.ok) {
         const data = await resMethods.json();
         const list = Array.isArray(data) ? data : (data.data || []);
@@ -249,10 +319,34 @@ export default function SalesBillingModule() {
         const list = Array.isArray(data) ? data : (data.data || []);
         list.sort((a: any, b: any) => b.id - a.id);
         setSalesHistory(list.map((s: any) => ({
+=======
+      // 2. PAGOS (ELIMINADO FETCH: Usamos STATIC_PAYMENT_METHODS)
+
+      // 3. CLIENTES
+      const resClients = await fetch(`${API_URL}/clients`, { headers });
+      if (resClients.ok) {
+        const dataClients = await resClients.json();
+        const listClients = Array.isArray(dataClients) ? dataClients : (dataClients.data || []);
+        setClients(listClients.map((c: any) => ({
+          id: c.id,
+          name: c.fullname || c.name || "Sin Nombre",
+          email: c.email || "", phone: c.phone || "", address: c.address || "", rif: c.taxId || c.rif || ""
+        })));
+      }
+
+      // 4. HISTORIAL
+      const resHistory = await fetch(`${API_URL}/sales`, { headers });
+      if (resHistory.ok) {
+        const dataHistory = await resHistory.json();
+        const listHistory = Array.isArray(dataHistory) ? dataHistory : (dataHistory.data || []);
+        listHistory.sort((a: any, b: any) => b.id - a.id);
+        setSalesHistory(listHistory.map((s: any) => ({
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
           ...s,
           client: s.client ? { ...s.client, name: s.client.fullname || s.client.name } : undefined
         })));
       }
+<<<<<<< HEAD
     } catch (error) {
       console.error("Error cargando datos:", error);
     } finally {
@@ -289,10 +383,14 @@ export default function SalesBillingModule() {
     } finally {
       setLoadingRate(false);
     }
+=======
+    } catch (error) { console.error("Error cargando datos:", error); } finally { setLoading(false); }
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   }, [session, status]);
 
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
+<<<<<<< HEAD
   useEffect(() => {
     if (selectedCurrencyId) {
       fetchExchangeRate(selectedCurrencyId);
@@ -315,6 +413,16 @@ export default function SalesBillingModule() {
       currencyCode: selectedCurr?.code || "USD"
     };
   }, [selectedProducts, exchangeRate, selectedCurrencyId, currencies]);
+=======
+  // --- FUNCIONES ---
+  const formatCurrency = useCallback((amount: number, currency: string = "VES") => {
+    return `Bs. ${amount.toLocaleString("es-VE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }, []);
+
+  const calculateTotals = useMemo(() => {
+    return { totalVES: selectedProducts.reduce((sum, item) => sum + item.total, 0) };
+  }, [selectedProducts]);
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
 
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
@@ -346,6 +454,10 @@ export default function SalesBillingModule() {
     setSelectedProducts(prev => prev.filter(i => i.product_id !== productId));
   };
 
+<<<<<<< HEAD
+=======
+  // --- PROCESOS ---
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   const processSale = async () => {
     if (!selectedClient) return showMessage('error', 'Falta Cliente', 'Por favor seleccione un cliente.');
     if (!selectedPaymentMethodId) return showMessage('error', 'Falta Pago', 'Por favor seleccione un método de pago.');
@@ -353,6 +465,7 @@ export default function SalesBillingModule() {
 
     setLoading(true);
     try {
+<<<<<<< HEAD
       const payload = {
         clientId: selectedClient.id,
         paymentMethodId: Number(selectedPaymentMethodId),
@@ -419,6 +532,20 @@ export default function SalesBillingModule() {
     } finally {
       setLoading(false);
     }
+=======
+      const res = await fetch(`${API_URL}/sales`, {
+        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${session?.user?.accessToken}` },
+        body: JSON.stringify({ clientId: selectedClient.id, paymentMethodId: Number(selectedPaymentMethodId), items: selectedProducts.map(i => ({ productId: i.product_id, quantity: i.quantity })) })
+      });
+      if (!res.ok) throw new Error((await res.json()).message);
+
+      await fetchAllData();
+      setSelectedProducts([]); setSelectedClient(null); setSelectedPaymentMethodId(""); setSearchTerm("");
+      showMessage('success', '¡Venta Exitosa!', 'La transacción se ha registrado correctamente.', () => {
+        setActiveTab("sales-history");
+      });
+    } catch (e: any) { showMessage('error', 'Error al Procesar', e.message || 'Ocurrió un error inesperado.'); } finally { setLoading(false); }
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
   };
 
   const handleCreateClient = async () => {
@@ -488,6 +615,7 @@ export default function SalesBillingModule() {
         </DialogContent>
       </Dialog>
 
+<<<<<<< HEAD
       {/* MODAL DE ABONO */}
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent className="sm:max-w-[400px]">
@@ -523,6 +651,8 @@ export default function SalesBillingModule() {
         </DialogContent>
       </Dialog>
 
+=======
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
       {/* MODAL VISOR FACTURA */}
       <Dialog open={viewSaleModalOpen} onOpenChange={setViewSaleModalOpen}>
         <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0 overflow-hidden">
@@ -581,6 +711,7 @@ export default function SalesBillingModule() {
                     <Label>Cliente</Label>
                     <div className="flex gap-2">
                       <Input value={selectedClient?.name || ""} placeholder="Seleccione un cliente" readOnly className="font-medium" />
+<<<<<<< HEAD
 
                       {/* DIALOG DE SELECCIÓN Y ABONO DE CLIENTES */}
                       <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
@@ -615,12 +746,26 @@ export default function SalesBillingModule() {
                                     </Button>
                                   )}
                                 </div>
+=======
+                      <Dialog open={isClientDialogOpen} onOpenChange={setIsClientDialogOpen}>
+                        <DialogTrigger asChild><Button size="icon" variant="outline" title="Buscar Cliente"><Search className="h-4 w-4" /></Button></DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader><DialogTitle>Seleccionar Cliente</DialogTitle><DialogDescription>Haga clic para seleccionar</DialogDescription></DialogHeader>
+                          <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {clients.map(c => (
+                              <div key={c.id} onClick={() => { setSelectedClient(c); setIsClientDialogOpen(false); }} className="p-2 border rounded hover:bg-gray-100 cursor-pointer">
+                                <div className="font-bold">{c.name}</div>
+                                <div className="text-xs text-gray-500">{c.rif}</div>
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                               </div>
                             ))}
                           </div>
                         </DialogContent>
                       </Dialog>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                       <Dialog open={isNewClientDialogOpen} onOpenChange={setIsNewClientDialogOpen}>
                         <DialogTrigger asChild><Button size="icon" className="bg-green-600 hover:bg-green-700 text-white" title="Crear Nuevo"><Plus className="h-4 w-4" /></Button></DialogTrigger>
                         <DialogContent>
@@ -649,6 +794,7 @@ export default function SalesBillingModule() {
                     ))}
                   </div>
 
+<<<<<<< HEAD
                   {/* --- SECCIÓN DE PAGO Y MONEDA (AJUSTADA AL MISMO TAMAÑO) --- */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div className="space-y-2">
@@ -712,6 +858,22 @@ export default function SalesBillingModule() {
                     {loading ? <Loader2 className="animate-spin mr-2" /> : <ShoppingCart className="mr-2 h-5 w-5" />}
                     Procesar Venta
                   </Button>
+=======
+                  <div className="mb-4 space-y-2">
+                    <Label>Método de Pago</Label>
+                    <Select value={selectedPaymentMethodId} onValueChange={setSelectedPaymentMethodId}>
+                      <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                      <SelectContent>{(paymentMethods).map(pm => (<SelectItem key={pm.id} value={pm.id.toString()}>{pm.name}</SelectItem>))}</SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-lg font-bold"><span>Total:</span><span>{formatCurrency(calculateTotals.totalVES, "VES")}</span></div>
+                    <p className="text-xs text-right text-gray-500">Ref USD: {formatCurrency(calculateTotals.totalVES / currentRate, "USD")}</p>
+                  </div>
+
+                  <Button className="w-full mt-4" size="lg" onClick={processSale} disabled={loading}><ShoppingCart className="mr-2 h-5 w-5" /> Procesar Venta</Button>
+>>>>>>> 8cccc43d8bd31a1e93c709de33c34516c5fafa72
                 </CardContent>
               </Card>
             </div>
