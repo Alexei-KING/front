@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { loginAction } from "../../actions/auth-action";
+import { useSession } from "next-auth/react";
 import { Loader2, Package, User, Lock } from "lucide-react";
 import { useAuth } from "@/components/auth-context";
 
@@ -25,6 +26,7 @@ const FormLogin = () => {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { isLoading } = useAuth();
+  const { update } = useSession();
 
   const form = useForm<z.infer<typeof LoginSchema>>({
     resolver: zodResolver(LoginSchema),
@@ -40,7 +42,9 @@ const FormLogin = () => {
       if (response?.error) {
         setError(response.error);
       } else {
+        await update();
         router.push("/dashboard");
+        router.refresh();
       }
     });
   }
